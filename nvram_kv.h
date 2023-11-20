@@ -17,33 +17,31 @@ extern "C" {
 
 #include "gd25qxx.h"
     
-    
-#define PREAMBLE                0x1FACADE1
+
+typedef int32_t (*NVRReadData_cb)(uint32_t addr, uint8_t *data, uint32_t size);
+typedef int32_t (*NVRWriteData_cb)(uint32_t addr, uint8_t *data, uint32_t size);
+typedef int32_t (*NVREraseSector_cb)(uint32_t addr);    
 
 
+typedef enum {
+    NVR_ERROR_NONE = 0,
+    NVR_ERROR_INIT = -1,
+    NVR_ERROR_HW = -2,
+    NVR_ERROR_BUSY = -3,
+    NVR_ERROR_HEADER = -4,
+    NVR_ERROR_CRC = -5,    
+    NVR_ERROR_NOT_FOUND = -6,
+        
+    NVR_ERROR_OPENED = 1,
+} NVRError_t;
 
 
-typedef struct {
-	uint32_t                    Preamble;
-    uint32_t                    ItemId;
-    uint32_t                    ItemIdInv;
-    uint32_t                    CRC32;
-    uint32_t                    Reserved;
-	uint32_t                    DataSize;
-    uint32_t                    WriteCounter;
-    uint32_t                    TimeStamp;
-    uint32_t                    State;
-    uint32_t                    NameSize;
-    uint32_t                    ItemAddrPrev;
-    uint32_t                    ItemAddrNext;
-} NVRHeader_t;
-
-
-
-void NVRInit(void);
-int32_t NVRSearchItem(uint32_t id, uint32_t *addr, uint32_t *size);
-int32_t NVRReadItem(uint32_t id, uint32_t addr, uint32_t size, uint8_t *data);
-int32_t NVRWriteItem(uint32_t id, uint32_t addr, uint32_t size, uint8_t *data);
+NVRError_t NVRInit(uint32_t pageSize, uint32_t sectorSize, uint32_t startAddr, uint32_t memSize, uint8_t *page);
+NVRError_t NVRInitCB(NVRReadData_cb nvrRead, NVRWriteData_cb nvrWrite, NVREraseSector_cb nvrErase);
+NVRError_t NVROpenFile(uint32_t id, uint32_t *size);
+NVRError_t NVRReadFile(uint32_t id, uint32_t pos, uint32_t size, uint8_t *data);
+NVRError_t NVRWriteFile(uint32_t id, uint32_t pos, uint32_t size, uint8_t *data);
+NVRError_t NVRCloseFile(uint32_t id);
 
 
 
