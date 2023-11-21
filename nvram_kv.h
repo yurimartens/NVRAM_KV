@@ -18,10 +18,8 @@ extern "C" {
 #include "gd25qxx.h"
     
 
-typedef int32_t (*NVRReadData_cb)(uint32_t addr, uint8_t *data, uint32_t size);
-typedef int32_t (*NVRWriteData_cb)(uint32_t addr, uint8_t *data, uint32_t size);
-typedef int32_t (*NVREraseSector_cb)(uint32_t addr);    
-
+#define NVR_FLAGS_CREATE                    (1 << 0)
+    
 
 typedef enum {
     NVR_ERROR_NONE = 0,
@@ -31,14 +29,20 @@ typedef enum {
     NVR_ERROR_HEADER = -4,
     NVR_ERROR_CRC = -5,    
     NVR_ERROR_NOT_FOUND = -6,
+    NVR_ERROR_ARGUMENT = -7,
         
     NVR_ERROR_OPENED = 1,
 } NVRError_t;
 
 
+typedef int32_t (*NVRReadData_t)(uint32_t addr, uint8_t *data, uint32_t size);
+typedef int32_t (*NVRWriteData_t)(uint32_t addr, uint8_t *data, uint32_t size);
+typedef int32_t (*NVREraseSector_t)(uint32_t addr); 
+
+
 NVRError_t NVRInit(uint32_t pageSize, uint32_t sectorSize, uint32_t startAddr, uint32_t memSize, uint8_t *page);
-NVRError_t NVRInitCB(NVRReadData_cb nvrRead, NVRWriteData_cb nvrWrite, NVREraseSector_cb nvrErase);
-NVRError_t NVROpenFile(uint32_t id, uint32_t *size);
+NVRError_t NVRInitCB(NVRReadData_t nvrRead, NVRWriteData_t nvrWrite, NVREraseSector_t nvrErase);
+NVRError_t NVROpenFile(uint32_t id, uint32_t *size, uint32_t flags);
 NVRError_t NVRReadFile(uint32_t id, uint32_t pos, uint32_t size, uint8_t *data);
 NVRError_t NVRWriteFile(uint32_t id, uint32_t pos, uint32_t size, uint8_t *data);
 NVRError_t NVRCloseFile(uint32_t id);
