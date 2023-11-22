@@ -44,7 +44,7 @@ NVRError_t NVRInit(uint32_t pageSize, uint32_t sectorSize, uint32_t startAddr, u
 NVRError_t NVRInitCB(NVRReadData_t nvrRead, NVRWriteData_t nvrWrite, NVREraseSector_t nvrErase);
 NVRError_t NVROpenFile(uint32_t id, uint32_t *size, uint32_t flags);
 NVRError_t NVRReadFile(uint32_t id, uint32_t pos, uint32_t size, uint8_t *data);
-NVRError_t NVRWriteFile(uint32_t id, uint32_t pos, uint32_t size, uint8_t *data);
+NVRError_t NVRWriteFile(uint32_t id, uint32_t pos, uint32_t partSize, uint8_t *data, uint32_t wholeSize);
 NVRError_t NVRCloseFile(uint32_t id);
 
 
