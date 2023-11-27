@@ -292,17 +292,16 @@ static NVRError_t NVRWrite(uint32_t addr, uint8_t *data, uint32_t size)
             remain -= sectorRemain;
             sectorRemain = SectorSize;
         } else {
-            sectorChunkSize = sectorRemain;
+            sectorChunkSize = remain;
             stop = 1;
         }
-        if (sectorChunkSize > remain) sectorChunkSize = remain;
-        
-        if (finishSector == 0) {
-            NVREraseSector(addr);
+        if (finishSector) {
+            finishSector = 0;
         } else {
-            finishSector = 1;
+            NVREraseSector(addr);            
         }
         
+        stopS = 0;
         do {
             if (sectorChunkSize > pageRemain) {
                 chunkSize = pageRemain;
