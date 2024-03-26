@@ -100,7 +100,7 @@ NVRError_t NVROpenFile(uint32_t id, uint32_t *size)
     NVRError_t ret;
         
     TryToOpen = 1;
-    FileFound = FoundFileId = FoundFileAddr = FoundFileSize = LastFileId = 0, LastFileAddr = 0, LastFileSize = 0;
+    FileFound = FoundFileId = FoundFileAddr = FoundFileSize = LastFileId = LastFileAddr = LastFileSize = 0;
     while (start < end) {
         switch (ret = NVRCheckHeader(start, &LastFileAddr, &LastFileId, &LastFileSize)) {
             case NVR_ERROR_NONE:
@@ -252,7 +252,7 @@ static NVRError_t NVRCheckHeader(uint32_t addr, uint32_t *currAddr, uint32_t *cu
     }    
     while (offset < bytesToRead - HeaderSize) {        
         NVRHeader_t *h = (NVRHeader_t *)&Page[offset];         
-        if ((h->Preamble == PREAMBLE) && (h->FileId == ~h->FileIdInv) && (h->DataSize != 0) && (h->DataSize == ~h->DataSizeInv)) {
+        if ((h->Preamble == PREAMBLE) && (h->FileId == ~h->FileIdInv) && (h->DataSize != 0) && (h->DataSize == ~h->DataSizeInv)) {      // the write procedure doesnt split the header into two pages
             *currAddr = addr + offset;
             *currId = h->FileId;                                    
             *currSize = HeaderSize + h->DataSize; 
