@@ -200,7 +200,7 @@ NVRError_t NVRWriteFile(uint32_t id, uint8_t *data, uint32_t size)
     uint32_t addr = (LastFileAddr == 0) ? LastFileAddr : LastFileAddr + LastFileSize;
     uint32_t pageFilled = addr % PageSize;
     uint32_t pageRemain = PageSize - pageFilled;
-    if ((pageFilled && (Flags & NVR_FLAGS_PAGE_ALIGN)) || (pageRemain < HeaderSize)) {     // align to the nearest start of the page if flag is set or there is no place for the whole header
+    if ((pageFilled && (Flags & NVR_FLAGS_PAGE_ALIGN)) || (pageRemain < HeaderSize)) {     // align to the nearest start of the page if the flag is set or there is no place for the whole header
         addr += pageRemain;
         pageFilled = 0;
     }          
@@ -243,7 +243,7 @@ NVRError_t NVRWriteFilePart(uint32_t id, uint32_t pos, uint8_t *data, uint32_t p
     uint32_t addr = (LastFileAddr == 0) ? LastFileAddr : LastFileAddr + LastFileSize;
     uint32_t pageFilled = addr % PageSize;
     uint32_t pageRemain = PageSize - pageFilled;
-    if ((pageFilled && (Flags & NVR_FLAGS_PAGE_ALIGN)) || (pageRemain < HeaderSize)) {     // align to the nearest start of the page if flag is set or there is no place for the whole header
+    if ((pageFilled && (Flags & NVR_FLAGS_PAGE_ALIGN)) || (pageRemain < HeaderSize)) {     // align to the nearest start of the page if the flag is set or there is no place for the whole header
         addr += pageRemain;
         pageFilled = 0;
     }    
