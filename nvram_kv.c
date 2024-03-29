@@ -7,12 +7,18 @@
   */
 
 #include "nvram_kv.h"
+#include "crc32.h"
 #include <string.h>
 
 
 
 
 #define PREAMBLE                0x1FACADE1
+#define CRC_LEN                 4
+
+// Internal flags
+#define NVR_IFLAGS_CALC_CRC     (1 << 31)  
+
 
 
 static uint32_t                 PageSize;
@@ -42,6 +48,7 @@ static uint8_t                  TryToOpen = 0, Flags = 0;
 static uint32_t                 FoundFileAddr, FoundFileSize;
 static uint32_t                 LastFileId = 0, LastFileAddr = 0, LastFileSize = 0;
 static uint8_t                  FileFound = 0;
+static uint32_t                 CRC;
 
 
 
@@ -106,7 +113,7 @@ NVRError_t NVROpenFile(uint32_t id, uint32_t *size)
     while (start < end) {
         switch (ret = NVRCheckHeader(start, &LastFileAddr, &LastFileId, &LastFileSize)) {
             case NVR_ERROR_NONE:
-                start = LastFileAddr + LastFileSize;  // next addr to scan
+                start = LastFileAddr + LastFileSize + CRC_LEN;  // next addr to scan
                 if (Flags & NVR_FLAGS_PAGE_ALIGN) {
                    uint32_t pageFilled = start % PageSize;
                    start += PageSize - pageFilled;
@@ -129,7 +136,10 @@ NVRError_t NVROpenFile(uint32_t id, uint32_t *size)
     }
     if (FileFound) {
         *size = FoundFileSize;
+        // Read again and
+        //CalcCRC32(const void* buf, uint32_t len, uint32_t CRCVal);
         ret = NVR_ERROR_OPENED;
+        // else CRC_ERROR
     } else {   
         FoundFileAddr = LastFileAddr;
         FoundFileSize = LastFileSize;
@@ -197,10 +207,10 @@ NVRError_t NVRWriteFile(uint32_t id, uint8_t *data, uint32_t size)
     if (data == 0) return NVR_ERROR_ARGUMENT;
     
     NVRError_t ret = NVR_ERROR_NONE;
-    uint32_t addr = (LastFileAddr == 0) ? LastFileAddr : LastFileAddr + LastFileSize;
+    uint32_t addr = (LastFileAddr == 0) ? LastFileAddr : LastFileAddr + LastFileSize + CRC_LEN;
     uint32_t pageFilled = addr % PageSize;
     uint32_t pageRemain = PageSize - pageFilled;
-    if ((pageFilled && (Flags & NVR_FLAGS_PAGE_ALIGN)) || (pageRemain < HeaderSize)) {     // align to the nearest start of the page if flag is set or there is no place for the whole header
+    if ((pageFilled && (Flags & NVR_FLAGS_PAGE_ALIGN)) || (pageRemain < HeaderSize)) {     // align to the nearest start of the page if the flag is set or there is no place for the whole header
         addr += pageRemain;
         pageFilled = 0;
     }          
@@ -216,15 +226,18 @@ NVRError_t NVRWriteFile(uint32_t id, uint8_t *data, uint32_t size)
     FoundFileAddr = LastFileAddr = addr + HeaderSize;  // to allaw instant access to the file after writing
     FoundFileSize = LastFileSize = size;
         
-    if ((pageFilled + HeaderSize + size) > PageSize) {
+    if ((pageFilled + HeaderSize + size + CRC_LEN) > PageSize) {
         int s = PageSize - pageFilled - HeaderSize;        
         memcpy(&Page[HeaderSize], data, s);    
         size -= s;
-        if (0 != (ret = NVRWrite(addr, Page, PageSize - pageFilled, Flags))) return ret;
-        return NVRWrite(addr + HeaderSize + s, &data[s], size, Flags);
+        CRC = 0;
+        if (0 != (ret = NVRWrite(addr, Page, PageSize - pageFilled, NVR_IFLAGS_CALC_CRC))) return ret;
+        return NVRWrite(addr + HeaderSize + s, &data[s], size, NVR_IFLAGS_CALC_CRC);
     } else {
         memcpy(&Page[HeaderSize], data, size); 
-        return NVRWrite(addr, Page, size + HeaderSize, Flags);
+        uint32_t crc = CalcCRC32((const void *)&Page[HeaderSize], size, 0);
+        *(uint32_t *)&Page[HeaderSize + size] = crc;
+        return NVRWrite(addr, Page, size + HeaderSize + CRC_LEN, Flags);
     }    
 }
 
@@ -240,10 +253,10 @@ NVRError_t NVRWriteFilePart(uint32_t id, uint32_t pos, uint8_t *data, uint32_t p
     if ((data == 0) || (fullSize == 0) || (partSize > fullSize)) return NVR_ERROR_ARGUMENT;
     
     NVRError_t ret = NVR_ERROR_NONE;
-    uint32_t addr = (LastFileAddr == 0) ? LastFileAddr : LastFileAddr + LastFileSize;
+    uint32_t addr = (LastFileAddr == 0) ? LastFileAddr : LastFileAddr + LastFileSize + CRC_LEN;
     uint32_t pageFilled = addr % PageSize;
     uint32_t pageRemain = PageSize - pageFilled;
-    if ((pageFilled && (Flags & NVR_FLAGS_PAGE_ALIGN)) || (pageRemain < HeaderSize)) {     // align to the nearest start of the page if flag is set or there is no place for the whole header
+    if ((pageFilled && (Flags & NVR_FLAGS_PAGE_ALIGN)) || (pageRemain < HeaderSize)) {     // align to the nearest start of the page if the flag is set or there is no place for the whole header
         addr += pageRemain;
         pageFilled = 0;
     }    
@@ -333,7 +346,7 @@ static NVRError_t NVRCheckHeader(uint32_t addr, uint32_t *currAddr, uint32_t *cu
         if ((h->Preamble == PREAMBLE) && (h->FileId == ~h->FileIdInv) && (h->DataSize != 0) && (h->DataSize == ~h->DataSizeInv)) {      // the write procedure doesnt split the header into two pages
             *currAddr = addr + offset;
             *currId = h->FileId;                                    
-            *currSize = HeaderSize + h->DataSize; 
+            *currSize = HeaderSize + h->DataSize;             
             ret = NVR_ERROR_NONE;    
             break;
         } else {
@@ -361,7 +374,7 @@ static NVRError_t NVRWrite(uint32_t addr, uint8_t *data, uint32_t size, uint32_t
     uint32_t finishSector = (addr % SectorSize) ? 1 : 0;
     uint32_t sectorRemain = SectorSize - (addr % SectorSize);
     uint32_t pageRemain = PageSize - (addr % PageSize);
-    uint32_t endMem = MemoryStartAddr + MemorySize;
+    uint32_t endMem = MemoryStartAddr + MemorySize;    
        
     do {
         if (addr == endMem) addr = MemoryStartAddr;
@@ -389,6 +402,10 @@ static NVRError_t NVRWrite(uint32_t addr, uint8_t *data, uint32_t size, uint32_t
                 chunkSize = sectorChunkSize;
                 stopS = 1;
             }  
+            if (flags & NVR_IFLAGS_CALC_CRC) {
+                CRC = CalcCRC32((const void *)&data[offset], chunkSize, CRC);
+                //if (
+            }
             if (0 == NVRWriteDataLL(addr, &data[offset], chunkSize)) {
                 offset += chunkSize;
                 addr += chunkSize;

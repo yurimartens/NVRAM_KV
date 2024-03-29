@@ -19,7 +19,8 @@ extern "C" {
     
 
 
-#define NVR_FLAGS_PAGE_ALIGN                            (1 << 0)    
+#define NVR_FLAGS_PAGE_ALIGN                            (1 << 0)   
+     
     
 
 typedef enum {
