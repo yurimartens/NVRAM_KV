@@ -19,7 +19,7 @@ extern "C" {
     
 
 
-    
+#define NVR_FLAGS_PAGE_ALIGN                            (1 << 0)    
     
 
 typedef enum {
@@ -41,12 +41,12 @@ typedef int32_t (*NVRWriteData_t)(uint32_t addr, uint8_t *data, uint32_t size);
 typedef int32_t (*NVREraseSector_t)(uint32_t addr); 
 
 
-NVRError_t NVRInit(uint32_t pageSize, uint32_t sectorSize, uint32_t startAddr, uint32_t memSize, uint8_t *page);
+NVRError_t NVRInit(uint32_t pageSize, uint32_t sectorSize, uint32_t startAddr, uint32_t memSize, uint8_t *page, uint32_t flags);
 NVRError_t NVRInitLL(NVRReadData_t nvrRead, NVRWriteData_t nvrWrite, NVREraseSector_t nvrErase);
 NVRError_t NVROpenFile(uint32_t id, uint32_t *size);
 NVRError_t NVRReadFile(uint32_t id, uint32_t pos, uint8_t *data, uint32_t size);
-NVRError_t NVRWriteFile(uint32_t id, uint8_t *data, uint32_t size, uint32_t flags);
-NVRError_t NVRWriteFilePart(uint32_t id, uint32_t pos, uint8_t *data, uint32_t partSize, uint32_t fullSize, uint32_t flags);
+NVRError_t NVRWriteFile(uint32_t id, uint8_t *data, uint32_t size);
+NVRError_t NVRWriteFilePart(uint32_t id, uint32_t pos, uint8_t *data, uint32_t partSize, uint32_t fullSize);
 NVRError_t NVRCloseFile(uint32_t id);
 NVRError_t NVREraseAll();
 
