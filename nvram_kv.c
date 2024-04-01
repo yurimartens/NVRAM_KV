@@ -139,6 +139,62 @@ NVRError_t NVROpenFile(uint32_t id, uint32_t *size)
 }
 
 /**
+  * @brief      todo: BST
+  * @param
+  * @retval
+  */
+NVRError_t NVRSearchForLastFile(uint32_t *lastId, uint32_t *nextAddr)
+{
+    if (NotReady) return NVR_ERROR_INIT;
+    
+    uint32_t start = MemoryStartAddr;
+    uint32_t end = MemoryStartAddr + MemorySize; 
+    NVRError_t ret = NVR_ERROR_NONE;
+        
+    TryToOpen = 1;
+    FileFound = FoundFileAddr = FoundFileSize = LastFileId = LastFileAddr = LastFileSize = 0;
+    while (start < end) {
+        switch (ret = NVRCheckHeader(start, &LastFileAddr, &LastFileId, &LastFileSize)) {
+            case NVR_ERROR_NONE:
+                start = LastFileAddr + LastFileSize;  // next addr to scan
+                if (Flags & NVR_FLAGS_PAGE_ALIGN) {
+                   uint32_t pageFilled = start % PageSize;
+                   start += PageSize - pageFilled;
+                } 
+                LastFileAddr += HeaderSize;
+                LastFileSize -= HeaderSize;  
+                FileFound = 1;
+            break;
+            case NVR_ERROR_HEADER:
+                start += PageSize;
+            break; 
+            default:
+                return ret;
+            break;
+        }
+    }  
+    if (FileFound) {
+        *lastId = LastFileId;
+        *nextAddr = LastFileAddr + LastFileSize;
+    }
+    return ret;
+}
+    
+/**
+  * @brief      todo: BST
+  * @param
+  * @retval
+  */
+NVRError_t NVRGetStartAddr(uint32_t *nextAddr)
+{
+    if (NotReady) return NVR_ERROR_INIT;
+    
+    *nextAddr = MemoryStartAddr;
+    
+    return NVR_ERROR_NONE;
+}
+
+/**
   * @brief
   * @param
   * @retval
