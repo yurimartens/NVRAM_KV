@@ -92,18 +92,27 @@ NVRError_t NVRInitLL(NVRReadData_t nvrRead, NVRWriteData_t nvrWrite, NVREraseSec
   * @param
   * @retval
   */
-NVRError_t NVROpenFile(uint32_t id, uint32_t *size)
+NVRError_t NVROpenFile(uint32_t id, uint32_t *size, uint32_t flags)
 {
     if (NotReady) return NVR_ERROR_INIT;
-    if (size == 0) return NVR_ERROR_ARGUMENT;
+    if (size == 0) return NVR_ERROR_ARGUMENT;   // check pointer
     
-    uint32_t start = MemoryStartAddr;
-    uint32_t end = MemoryStartAddr + MemorySize;    
-    NVRError_t ret;
+    NVRError_t ret = NVR_ERROR_NONE;
+    
+    uint32_t start;
+    uint32_t end;
+    uint32_t exit = 0;
+    
+    if (((flags & NVR_OPEN_FLAGS_FROM_CURRENT_POS) == 0) || (FoundFileAddr == 0)) {
+        start = MemoryStartAddr;          
+    } else {
+        start = MemoryStartAddr + FoundFileAddr - HeaderSize;
+    }
+    end = MemoryStartAddr + MemorySize; 
         
     TryToOpen = 1;
     FileFound = FoundFileAddr = FoundFileSize = LastFileId = LastFileAddr = LastFileSize = 0;
-    while (start < end) {
+    while ((start < end) && (exit == 0)) {
         switch (ret = NVRCheckHeader(start, &LastFileAddr, &LastFileId, &LastFileSize)) {
             case NVR_ERROR_NONE:
                 start = LastFileAddr + LastFileSize;  // next addr to scan
@@ -117,6 +126,7 @@ NVRError_t NVROpenFile(uint32_t id, uint32_t *size)
                     FileFound = 1; 
                     FoundFileAddr = LastFileAddr;
                     FoundFileSize = LastFileSize;
+                    exit = flags & NVR_OPEN_FLAGS_FIRST_MATCH;
                 }                
             break;
             case NVR_ERROR_HEADER:
@@ -181,17 +191,23 @@ NVRError_t NVRSearchForLastFile(uint32_t *lastId, uint32_t *nextAddr)
 }
     
 /**
-  * @brief      todo: BST
+  * @brief      
   * @param
   * @retval
   */
-NVRError_t NVRGetStartAddr(uint32_t *nextAddr)
+uint32_t NVRGetNextAddr(void)
 {
-    if (NotReady) return NVR_ERROR_INIT;
-    
-    *nextAddr = MemoryStartAddr;
-    
-    return NVR_ERROR_NONE;
+    return LastFileAddr + LastFileSize;
+}
+
+/**
+  * @brief      
+  * @param
+  * @retval
+  */
+uint32_t NVRGetLastId(void)
+{
+    return LastFileId;
 }
 
 /**
@@ -360,7 +376,7 @@ NVRError_t NVREraseAll()
             break;
         }
     }  
-    FileFound = TryToOpen = FoundFileAddr = FoundFileSize = LastFileId = LastFileAddr = LastFileSize = 0;
+    FileFound = FoundFileAddr = FoundFileSize = LastFileId = LastFileAddr = LastFileSize = 0;
     return ret;
 }
 
