@@ -103,6 +103,8 @@ NVRError_t NVROpenFile(uint32_t id, uint32_t *size, uint32_t flags)
     uint32_t end;
     uint32_t exit = 0;
     
+    *size = 0;
+    
     if (((flags & NVR_OPEN_FLAGS_FROM_CURRENT_POS) == 0) || (FoundFileAddr == 0)) {
         start = MemoryStartAddr;          
     } else {
@@ -269,6 +271,7 @@ NVRError_t NVRWriteFile(uint32_t id, uint8_t *data, uint32_t size)
     if (data == 0) return NVR_ERROR_ARGUMENT;
     
     NVRError_t ret = NVR_ERROR_NONE;
+    uint32_t owf = 0;
     uint32_t addr = (LastFileAddr == 0) ? LastFileAddr : LastFileAddr + LastFileSize;
     uint32_t pageFilled = addr % PageSize;
     uint32_t pageRemain = PageSize - pageFilled;
@@ -276,7 +279,10 @@ NVRError_t NVRWriteFile(uint32_t id, uint8_t *data, uint32_t size)
         addr += pageRemain;
         pageFilled = 0;
     }          
-    if ((addr + HeaderSize) > (MemoryStartAddr + MemorySize)) addr = MemoryStartAddr;
+    if ((addr + HeaderSize) > (MemoryStartAddr + MemorySize)) {
+        addr = MemoryStartAddr;
+        owf = 1;
+    }
     NVRHeader_t *h = (NVRHeader_t *)Page;    
     memset(Page, 0, HeaderSize);
     h->Preamble = PREAMBLE;
@@ -293,10 +299,14 @@ NVRError_t NVRWriteFile(uint32_t id, uint8_t *data, uint32_t size)
         memcpy(&Page[HeaderSize], data, s);    
         size -= s;
         if (0 != (ret = NVRWrite(addr, Page, PageSize - pageFilled, Flags))) return ret;
-        return NVRWrite(addr + HeaderSize + s, &data[s], size, Flags);
+        ret = NVRWrite(addr + HeaderSize + s, &data[s], size, Flags);
+        if (owf) return NVR_ERROR_END_MEM;
+        else return ret;
     } else {
         memcpy(&Page[HeaderSize], data, size); 
-        return NVRWrite(addr, Page, size + HeaderSize, Flags);
+        ret = NVRWrite(addr, Page, size + HeaderSize, Flags);
+        if (owf) return NVR_ERROR_END_MEM;
+        else return ret;
     }    
 }
 
