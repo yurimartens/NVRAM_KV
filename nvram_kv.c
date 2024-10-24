@@ -1,7 +1,7 @@
 /**
   ******************************************************************************
   * @file    nvram_kv.c
-  * @author  Yuri Martenstev <yurimartens@gmail.com>
+  * @author  Yuri Martentsev <yurimartens@gmail.com>, <yuri.martens@yandex.ru>
   * @brief
   ******************************************************************************
   */
