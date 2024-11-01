@@ -15,8 +15,7 @@ extern "C" {
 #include <stdint.h>
 
 
-#include "gd25qxx.h"
-    
+   
 
 
 #define NVR_FLAGS_PAGE_ALIGN                            (1 << 0) 
@@ -45,18 +44,22 @@ typedef int32_t (*NVRReadData_t)(uint32_t addr, uint8_t *data, uint32_t size);
 typedef int32_t (*NVRWriteData_t)(uint32_t addr, uint8_t *data, uint32_t size);
 typedef int32_t (*NVREraseSector_t)(uint32_t addr); 
 
+struct NVRamKV;
+typedef struct NVRamKV *NVRamKV_t;
 
-NVRError_t NVRInit(uint32_t pageSize, uint32_t sectorSize, uint32_t startAddr, uint32_t memSize, uint8_t *page, uint32_t flags);
-NVRError_t NVRInitLL(NVRReadData_t nvrRead, NVRWriteData_t nvrWrite, NVREraseSector_t nvrErase);
-NVRError_t NVROpenFile(uint32_t id, uint32_t *size, uint32_t flags);
-NVRError_t NVRSearchForLastFile(uint32_t *lastId, uint32_t *nextAddr);
-uint32_t   NVRGetNextAddr(void);
-uint32_t   NVRGetLastId(void);
-NVRError_t NVRReadFile(uint32_t id, uint32_t pos, uint8_t *data, uint32_t size);
-NVRError_t NVRWriteFile(uint32_t id, uint8_t *data, uint32_t size);
-NVRError_t NVRWriteFilePart(uint32_t id, uint32_t pos, uint8_t *data, uint32_t partSize, uint32_t fullSize);
-NVRError_t NVRCloseFile(uint32_t id);
-NVRError_t NVREraseAll();
+
+
+NVRError_t NVRInit(NVRamKV_t nvr, uint32_t pageSize, uint32_t sectorSize, uint32_t startAddr, uint32_t memSize, uint8_t *page, uint32_t flags);
+NVRError_t NVRInitLL(NVRamKV_t nvr, NVRReadData_t nvrRead, NVRWriteData_t nvrWrite, NVREraseSector_t nvrErase);
+NVRError_t NVROpenFile(NVRamKV_t nvr, uint32_t id, uint32_t *size, uint32_t flags);
+NVRError_t NVRSearchForLastFile(NVRamKV_t nvr, uint32_t *lastId, uint32_t *nextAddr);
+uint32_t   NVRGetNextAddr(NVRamKV_t nvr);
+uint32_t   NVRGetLastId(NVRamKV_t nvr);
+NVRError_t NVRReadFile(NVRamKV_t nvr, uint32_t id, uint32_t pos, uint8_t *data, uint32_t size);
+NVRError_t NVRWriteFile(NVRamKV_t nvr, uint32_t id, uint8_t *data, uint32_t size);
+NVRError_t NVRWriteFilePart(NVRamKV_t nvr, uint32_t id, uint32_t pos, uint8_t *data, uint32_t partSize, uint32_t fullSize);
+NVRError_t NVRCloseFile(NVRamKV_t nvr, uint32_t id);
+NVRError_t NVREraseAll(NVRamKV_t nvr);
 
 
 
