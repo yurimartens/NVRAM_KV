@@ -58,8 +58,8 @@ typedef struct NVRamKV {
     NVRWriteData_t              NVRWriteDataLL;
     NVREraseSector_t            NVREraseSectorLL;
         
-    uint32_t                    FoundFileAddr, FoundFileSize;
-    uint32_t                    LastFileId, LastFileAddr, LastFileSize;
+    uint32_t                    FoundFileAddr, FoundFileSize;       // relative addr
+    uint32_t                    LastFileId, LastFileAddr, LastFileSize; // relative addr
     uint32_t                    Flags;
     
     uint8_t                     FileFound;    
@@ -83,7 +83,7 @@ NVRError_t NVRCloseFile(NVRamKV_t *nvr, uint32_t id);
 NVRError_t NVREraseAll(NVRamKV_t *nvr);
 
 
-
+extern const uint32_t           NVRHeaderSize;
 
 #ifdef __cplusplus
 }
