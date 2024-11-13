@@ -58,8 +58,9 @@ typedef struct NVRamKV {
     NVRWriteData_t              NVRWriteDataLL;
     NVREraseSector_t            NVREraseSectorLL;
         
-    uint32_t                    FoundFileAddr, FoundFileSize;       // relative addr
-    uint32_t                    LastFileId, LastFileAddr, LastFileSize; // relative addr
+    uint64_t                    LastFileId;
+    uint32_t                    LastFileAddr, LastFileSize; // relative addr
+    uint32_t                    FoundFileAddr, FoundFileSize;       // relative addr    
     uint32_t                    Flags;
     
     uint8_t                     FileFound;    
@@ -72,14 +73,13 @@ typedef struct NVRamKV {
 
 NVRError_t NVRInit(NVRamKV_t *nvr, uint32_t pageSize, uint32_t sectorSize, uint32_t startAddr, uint32_t memSize, uint8_t *page, uint32_t flags);
 NVRError_t NVRInitLL(NVRamKV_t *nvr, NVRReadData_t nvrRead, NVRWriteData_t nvrWrite, NVREraseSector_t nvrErase);
-NVRError_t NVROpenFile(NVRamKV_t *nvr, uint32_t id, uint32_t *size, uint32_t flags);
-NVRError_t NVRSearchForLastFile(NVRamKV_t *nvr, uint32_t *lastId, uint32_t *nextAddr);
+NVRError_t NVROpenFile(NVRamKV_t *nvr, uint64_t id, uint32_t *size, uint32_t flags);
+NVRError_t NVRSearchForLastFile(NVRamKV_t *nvr, uint64_t *lastId, uint32_t *nextAddr);
 uint32_t   NVRGetNextAddr(NVRamKV_t *nvr);
-uint32_t   NVRGetLastId(NVRamKV_t *nvr);
-NVRError_t NVRReadFile(NVRamKV_t *nvr, uint32_t id, uint32_t pos, uint8_t *data, uint32_t size);
-NVRError_t NVRWriteFile(NVRamKV_t *nvr, uint32_t id, uint8_t *data, uint32_t size);
-NVRError_t NVRWriteFilePart(NVRamKV_t *nvr, uint32_t id, uint32_t pos, uint8_t *data, uint32_t partSize, uint32_t fullSize);
-NVRError_t NVRCloseFile(NVRamKV_t *nvr, uint32_t id);
+uint64_t   NVRGetLastId(NVRamKV_t *nvr);
+NVRError_t NVRReadOpenedFile(NVRamKV_t *nvr, uint32_t pos, uint8_t *data, uint32_t size);
+NVRError_t NVRWriteFile(NVRamKV_t *nvr, uint64_t id, uint8_t *data, uint32_t size);
+NVRError_t NVRCloseFile(NVRamKV_t *nvr, uint64_t id);
 NVRError_t NVREraseAll(NVRamKV_t *nvr);
 
 
