@@ -23,7 +23,8 @@ extern "C" {
 
 #define NVR_OPEN_FLAGS_FROM_CURRENT_POS                 (1 << 0) 
 #define NVR_OPEN_FLAGS_FIRST_MATCH                      (1 << 1)     
-#define NVR_OPEN_FLAGS_BACKWARD                         (1 << 2)   
+#define NVR_OPEN_FLAGS_NEAREST                          (1 << 2)         
+#define NVR_OPEN_FLAGS_BACKWARD                         (1 << 3)   
     
     
     

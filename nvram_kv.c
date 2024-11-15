@@ -87,7 +87,8 @@ NVRError_t NVROpenFile(NVRamKV_t *nvr, uint64_t id, uint32_t *size, uint32_t fla
     
     NVRError_t ret = NVR_ERROR_NONE;
     
-    uint32_t start, end, addr, s, exit = 0;    
+    uint32_t start, end, addr, s, exit = 0; 
+    uint64_t lastFileId = 0;
     
     *size = 0;
     
@@ -101,7 +102,7 @@ NVRError_t NVROpenFile(NVRamKV_t *nvr, uint64_t id, uint32_t *size, uint32_t fla
     nvr->TryToOpen = 1;
     nvr->FileFound = nvr->FoundFileAddr = nvr->FoundFileSize = nvr->LastFileId = nvr->LastFileAddr = nvr->LastFileSize = 0;
     while ((start < end) && (exit == 0)) {
-        switch (ret = NVRCheckHeader(nvr, start, &addr, &nvr->LastFileId, &s)) {
+        switch (ret = NVRCheckHeader(nvr, start, &addr, &lastFileId, &s)) {
             case NVR_ERROR_NONE:
                 start = addr + s;  // next addr to scan
                 if (nvr->Flags & NVR_FLAGS_PAGE_ALIGN) {
@@ -110,12 +111,22 @@ NVRError_t NVROpenFile(NVRamKV_t *nvr, uint64_t id, uint32_t *size, uint32_t fla
                 } 
                 nvr->LastFileAddr = addr + NVRHeaderSize - nvr->MemoryStartAddr;       // - startAddr => make relative addr
                 nvr->LastFileSize = s - NVRHeaderSize;
-                if (id == nvr->LastFileId) {
+                if (id == lastFileId) {
                     nvr->FileFound = 1; 
                     nvr->FoundFileAddr = nvr->LastFileAddr;
-                    nvr->FoundFileSize = nvr->LastFileSize;
+                    nvr->FoundFileSize = nvr->LastFileSize;                    
                     exit = flags & NVR_OPEN_FLAGS_FIRST_MATCH;
-                }                
+                } else {
+                    if (flags & NVR_OPEN_FLAGS_NEAREST) {
+                        if ((id > nvr->LastFileId) && (id < lastFileId)) {
+                            nvr->FileFound = 1; 
+                            nvr->FoundFileAddr = nvr->LastFileAddr;
+                            nvr->FoundFileSize = nvr->LastFileSize;                    
+                            exit = 1;
+                        }
+                    }
+                }
+                nvr->LastFileId = lastFileId;
             break;
             case NVR_ERROR_HEADER:
                 start += nvr->PageSize;
