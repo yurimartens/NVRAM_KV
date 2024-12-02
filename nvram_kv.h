@@ -22,9 +22,10 @@ extern "C" {
     
 
 #define NVR_OPEN_FLAGS_FROM_CURRENT_POS                 (1 << 0) 
-#define NVR_OPEN_FLAGS_FIRST_MATCH                      (1 << 1)     
-#define NVR_OPEN_FLAGS_NEAREST                          (1 << 2)         
-#define NVR_OPEN_FLAGS_BACKWARD                         (1 << 3)   
+#define NVR_OPEN_FLAGS_BINARY_SEARCH                    (1 << 1)     
+#define NVR_OPEN_FLAGS_FIRST_MATCH                      (1 << 2)     
+#define NVR_OPEN_FLAGS_NEAREST                          (1 << 3)         
+#define NVR_OPEN_FLAGS_BACKWARD                         (1 << 4)   
     
     
     
@@ -35,9 +36,10 @@ typedef enum {
     NVR_ERROR_HW = -2,
     NVR_ERROR_BUSY = -3,
     NVR_ERROR_HEADER = -4,
-    NVR_ERROR_END_MEM = -5,
-    NVR_ERROR_NOT_FOUND = -6,
-    NVR_ERROR_ARGUMENT = -7,
+    NVR_ERROR_EMPTY = -5,
+    NVR_ERROR_END_MEM = -6,
+    NVR_ERROR_NOT_FOUND = -7,
+    NVR_ERROR_ARGUMENT = -8,
         
     NVR_ERROR_OPENED = 1,
 } NVRError_t;
