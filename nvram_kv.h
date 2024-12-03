@@ -77,7 +77,6 @@ typedef struct NVRamKV {
 NVRError_t NVRInit(NVRamKV_t *nvr, uint32_t pageSize, uint32_t sectorSize, uint32_t startAddr, uint32_t memSize, uint8_t *page, uint32_t flags);
 NVRError_t NVRInitLL(NVRamKV_t *nvr, NVRReadData_t nvrRead, NVRWriteData_t nvrWrite, NVREraseSector_t nvrErase);
 NVRError_t NVROpenFile(NVRamKV_t *nvr, uint64_t id, uint32_t *size, uint32_t flags);
-NVRError_t NVRSearchForLastFile(NVRamKV_t *nvr, uint64_t *lastId, uint32_t *nextAddr);
 uint32_t   NVRGetNextAddr(NVRamKV_t *nvr);
 uint64_t   NVRGetLastId(NVRamKV_t *nvr);
 NVRError_t NVRReadOpenedFile(NVRamKV_t *nvr, uint32_t pos, uint8_t *data, uint32_t size);
