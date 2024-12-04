@@ -203,7 +203,7 @@ uint64_t NVRGetLastId(NVRamKV_t *nvr)
   * @param
   * @retval
   */
-NVRError_t NVRReadOpenedFile(NVRamKV_t *nvr, uint32_t pos, uint8_t *data, uint32_t size)
+NVRError_t NVRReadFile(NVRamKV_t *nvr, uint32_t pos, uint8_t *data, uint32_t size)
 {
     if (nvr->NotReady) return NVR_ERROR_INIT;
     if ((nvr->FileFound == 0) || (nvr->TryToOpen == 0)) return NVR_ERROR_NOT_FOUND;

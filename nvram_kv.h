@@ -79,7 +79,7 @@ NVRError_t NVRInitLL(NVRamKV_t *nvr, NVRReadData_t nvrRead, NVRWriteData_t nvrWr
 NVRError_t NVROpenFile(NVRamKV_t *nvr, uint64_t id, uint32_t *size, uint32_t flags);
 uint32_t   NVRGetNextAddr(NVRamKV_t *nvr);
 uint64_t   NVRGetLastId(NVRamKV_t *nvr);
-NVRError_t NVRReadOpenedFile(NVRamKV_t *nvr, uint32_t pos, uint8_t *data, uint32_t size);
+NVRError_t NVRReadFile(NVRamKV_t *nvr, uint32_t pos, uint8_t *data, uint32_t size);
 NVRError_t NVRWriteFile(NVRamKV_t *nvr, uint64_t id, uint8_t *data, uint32_t size);
 NVRError_t NVRCloseFile(NVRamKV_t *nvr, uint64_t id);
 NVRError_t NVREraseAll(NVRamKV_t *nvr);
