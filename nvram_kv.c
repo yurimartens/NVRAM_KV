@@ -155,10 +155,14 @@ NVRError_t NVROpenFile(NVRamKV_t *nvr, uint64_t id, uint32_t *size, uint32_t fla
                 }
             break;
             case NVR_ERROR_HEADER:
-                if (flags & NVR_OPEN_FLAGS_BINARY_SEARCH) {
-                    start -= nvr->PageSize;
+                if (lastFileId == 0) {
+                    if (flags & NVR_OPEN_FLAGS_BINARY_SEARCH) {
+                        start -= nvr->PageSize;
+                    } else {
+                        start += nvr->PageSize;
+                    }
                 } else {
-                    start += nvr->PageSize;
+                    exit = 1;
                 }
             break; 
             default:
