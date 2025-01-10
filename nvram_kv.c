@@ -153,6 +153,7 @@ NVRError_t NVROpenFile(NVRamKV_t *nvr, uint64_t id, uint32_t *size, uint32_t fla
                 } else {
                     exit = 1;
                 }
+                if (nvr->FileFound) exit = 1;   // a file was found in a prev cycle
             break;
             case NVR_ERROR_HEADER:
                 if (lastFileId == 0) {
@@ -164,6 +165,7 @@ NVRError_t NVROpenFile(NVRamKV_t *nvr, uint64_t id, uint32_t *size, uint32_t fla
                 } else {
                     exit = 1;
                 }
+                if (nvr->FileFound) exit = 1;   // a file was found in a prev cycle
             break; 
             default:
                 return ret;
