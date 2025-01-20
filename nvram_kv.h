@@ -40,7 +40,7 @@ typedef enum {
     NVR_ERROR_END_MEM = -6,
     NVR_ERROR_NOT_FOUND = -7,
     NVR_ERROR_ARGUMENT = -8,
-        
+    NVR_ERROR_CRC = -9,        
     NVR_ERROR_OPENED = 1,
 } NVRError_t;
 
@@ -65,6 +65,7 @@ typedef struct NVRamKV {
     uint32_t                    LastFileAddr, LastFileSize; // relative addr
     uint32_t                    FoundFileAddr, FoundFileSize;       // relative addr    
     uint32_t                    Flags;
+    uint32_t                    CRC32Temp;
     
     uint8_t                     FileFound;    
     uint8_t                     NotReady;
