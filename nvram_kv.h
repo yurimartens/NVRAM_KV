@@ -25,7 +25,9 @@ extern "C" {
 #define NVR_OPEN_FLAGS_BINARY_SEARCH                    (1 << 1)     
 #define NVR_OPEN_FLAGS_FIRST_MATCH                      (1 << 2)     
 #define NVR_OPEN_FLAGS_NEAREST                          (1 << 3)         
-#define NVR_OPEN_FLAGS_BACKWARD                         (1 << 4)   
+#define NVR_OPEN_FLAGS_BACKWARD                         (1 << 4) 
+#define NVR_OPEN_FLAGS_ANY_ID                           (1 << 5)
+#define NVR_OPEN_FLAGS_SCAN_FILES                       (NVR_OPEN_FLAGS_FROM_CURRENT_POS | NVR_OPEN_FLAGS_ANY_ID | NVR_OPEN_FLAGS_FIRST_MATCH)    
     
     
     
@@ -79,6 +81,7 @@ NVRError_t NVRInit(NVRamKV_t *nvr, uint32_t pageSize, uint32_t sectorSize, uint3
 NVRError_t NVRInitLL(NVRamKV_t *nvr, NVRReadData_t nvrRead, NVRWriteData_t nvrWrite, NVREraseSector_t nvrErase);
 NVRError_t NVROpenFile(NVRamKV_t *nvr, uint64_t id, uint32_t *size, uint32_t flags);
 uint32_t   NVRGetNextAddr(NVRamKV_t *nvr);
+NVRError_t NVRMoveToNextFile(NVRamKV_t *nvr);
 uint64_t   NVRGetLastId(NVRamKV_t *nvr);
 NVRError_t NVRReadFile(NVRamKV_t *nvr, uint32_t pos, uint8_t *data, uint32_t size);
 NVRError_t NVRWriteFile(NVRamKV_t *nvr, uint64_t id, uint8_t *data, uint32_t size);
