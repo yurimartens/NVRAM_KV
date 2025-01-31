@@ -205,6 +205,16 @@ uint32_t NVRGetNextAddr(NVRamKV_t *nvr)
   * @param
   * @retval
   */
+void NVRMoveToStart(NVRamKV_t *nvr)
+{
+    nvr->FileFound = nvr->FoundFileAddr = nvr->FoundFileSize = 0;
+}
+
+/**
+  * @brief      
+  * @param
+  * @retval
+  */
 NVRError_t NVRMoveToNextFile(NVRamKV_t *nvr)
 {
     if (nvr->FileFound) {
