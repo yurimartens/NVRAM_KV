@@ -86,14 +86,14 @@ NVRError_t NVRInitLL(NVRamKV_t *nvr, NVRReadData_t nvrRead, NVRWriteData_t nvrWr
   * @param
   * @retval
   */
-NVRError_t NVROpenFile(NVRamKV_t *nvr, uint64_t id, uint32_t *size, uint32_t flags)
+NVRError_t NVROpenFile(NVRamKV_t *nvr, uint64_t id, uint32_t *size, uint32_t flags, uint32_t emptyPagesLim)
 {
     if (nvr->NotReady) return NVR_ERROR_INIT;
     if (size == 0) return NVR_ERROR_ARGUMENT;   // check pointer
     
     NVRError_t ret = NVR_ERROR_NONE;
     
-    uint32_t start, end, half; 
+    uint32_t start, end, half, emptyPages = 0; 
     uint64_t lastFileId = 0;
     
     *size = 0;
@@ -143,6 +143,8 @@ NVRError_t NVROpenFile(NVRamKV_t *nvr, uint64_t id, uint32_t *size, uint32_t fla
                 nvr->LastFileId = lastFileId;
             break;
             case NVR_ERROR_EMPTY:
+                if (emptyPages < emptyPagesLim) emptyPages++;
+                else exit = 1;
                 if (lastFileId == 0) {
                     if (flags & NVR_OPEN_FLAGS_BINARY_SEARCH) {
                         if (half >= nvr->PageSize * 2) {
@@ -162,6 +164,8 @@ NVRError_t NVROpenFile(NVRamKV_t *nvr, uint64_t id, uint32_t *size, uint32_t fla
                 if (nvr->FileFound) exit = 1;   // a file was found in a prev cycle
             break;
             case NVR_ERROR_HEADER:
+                if (emptyPages < emptyPagesLim) emptyPages++;
+                else exit = 1;
                 if (lastFileId == 0) {
                     if (flags & NVR_OPEN_FLAGS_BINARY_SEARCH) {
                         start -= nvr->PageSize;
