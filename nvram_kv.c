@@ -168,7 +168,11 @@ NVRError_t NVROpenFile(NVRamKV_t *nvr, uint64_t id, uint32_t *size, uint32_t fla
                 else exit = 1;
                 if (lastFileId == 0) {
                     if (flags & NVR_OPEN_FLAGS_BINARY_SEARCH) {
-                        start -= nvr->PageSize;
+                        if (start >= nvr->MemoryStartAddr + half) start -= half;
+                        else { 
+                            if (start == nvr->MemoryStartAddr) return NVR_ERROR_EMPTY;
+                            else start = nvr->MemoryStartAddr;
+                        }
                     } else {
                         start += nvr->PageSize;
                     }
