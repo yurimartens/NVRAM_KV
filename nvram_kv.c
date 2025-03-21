@@ -213,6 +213,16 @@ uint32_t NVRGetNextAddr(NVRamKV_t *nvr)
   * @param
   * @retval
   */
+uint32_t NVRGetFileCRC(NVRamKV_t *nvr)
+{
+    return nvr->CRC32Temp;
+}
+
+/**
+  * @brief      
+  * @param
+  * @retval
+  */
 void NVRMoveToStart(NVRamKV_t *nvr)
 {
     nvr->FileFound = nvr->FoundFileAddr = nvr->FoundFileSize = 0;

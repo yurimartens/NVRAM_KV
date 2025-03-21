@@ -65,7 +65,7 @@ typedef struct NVRamKV {
     NVREraseSector_t            NVREraseSectorLL;
         
     uint64_t                    LastFileId;
-    uint32_t                    LastFileAddr, LastFileSize; // relative addr
+    uint32_t                    LastFileAddr, LastFileSize;         // relative addr
     uint32_t                    FoundFileAddr, FoundFileSize;       // relative addr    
     uint32_t                    Flags;
     uint32_t                    CRC32Temp;
@@ -82,6 +82,7 @@ NVRError_t NVRInit(NVRamKV_t *nvr, uint32_t pageSize, uint32_t sectorSize, uint3
 NVRError_t NVRInitLL(NVRamKV_t *nvr, NVRReadData_t nvrRead, NVRWriteData_t nvrWrite, NVREraseSector_t nvrErase);
 NVRError_t NVROpenFile(NVRamKV_t *nvr, uint64_t id, uint32_t *size, uint32_t flags, uint32_t emptyPagesLim);
 uint32_t   NVRGetNextAddr(NVRamKV_t *nvr);
+uint32_t   NVRGetFileCRC(NVRamKV_t *nvr);
 void       NVRMoveToStart(NVRamKV_t *nvr);
 NVRError_t NVRMoveToNextFile(NVRamKV_t *nvr);
 uint64_t   NVRGetLastId(NVRamKV_t *nvr);
