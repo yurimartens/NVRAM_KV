@@ -17,7 +17,13 @@
 #define PREAMBLE                0x1FACADE1
 
 
-
+#define FILE_FOUND()            do {nvr->FileFound = 1; \
+                                    nvr->FoundFileId = fileId; \
+                                    nvr->FoundFileAddr = addr + NVRHeaderSize - nvr->MemoryStartAddr; /* - startAddr => make relative addr*/ \
+                                    nvr->FoundFileSize = s - NVRHeaderSize; \
+                                    nvr->CRC32Temp = crc; \
+                                    nvr->FileSizePrev = sizePrev;  /*LastFileAddr is assigned in headerChecker*/ \
+                                } while(0)
 
 
 
@@ -27,6 +33,10 @@ typedef struct {
     uint64_t                    FileIdInv;    
 	uint32_t                    DataSize;
     uint32_t                    DataSizeInv;
+    uint32_t                    DataSizePrev;
+    uint32_t                    DataSizePrevInv;
+    uint32_t                    LastFileAddr;
+    uint32_t                    LastFileAddrInv;
     uint32_t                    DataCRC32;
 } NVRHeader_t;
 
@@ -36,7 +46,7 @@ static NVRHeader_t              EmptyNVRHeader;
 
 
 
-static NVRError_t NVRCheckHeader(NVRamKV_t *nvr, uint32_t addr, uint32_t *currAddr, uint64_t *currId, uint32_t *currSize, uint32_t *crc);
+static NVRError_t NVRCheckHeader(NVRamKV_t *nvr, uint32_t addr, uint32_t *currAddr, uint64_t *currId, uint32_t *currSize, uint32_t *crc, uint32_t *prevSize);
 static NVRError_t NVRWrite(NVRamKV_t *nvr, uint32_t addr, uint8_t *data, uint32_t size, uint32_t flags);
 
 
@@ -49,7 +59,7 @@ NVRError_t NVRInit(NVRamKV_t *nvr, uint32_t pageSize, uint32_t sectorSize, uint3
 {    
     if ((pageSize == 0) || (sectorSize == 0) || (memSize == 0) || (sectorSize < pageSize) || (page == 0)) return NVR_ERROR_INIT;
     nvr->NotReady = 1;
-    nvr->FoundFileId = nvr->FoundFileAddr = nvr->FoundFileSize = 0;
+    nvr->FoundFileId = nvr->FoundFileAddr = nvr->FoundFileSize = nvr->FileSizePrev = nvr->LastFileAddr = 0;
     nvr->FileFound = nvr->TryToOpen = 0;
     
     nvr->PageSize = pageSize;
@@ -105,16 +115,26 @@ NVRError_t NVROpenFile(NVRamKV_t *nvr, uint64_t id, uint32_t *size, uint32_t fla
             start = nvr->MemoryStartAddr;          
         }
     } else {
-        start = nvr->MemoryStartAddr + nvr->FoundFileAddr - NVRHeaderSize;
+        if (flags & NVR_OPEN_FLAGS_PREVIOUS) {
+            if (nvr->FoundFileAddr == 0) start = nvr->MemoryStartAddr + nvr->LastFileAddr - NVRHeaderSize;
+            else start = nvr->MemoryStartAddr + nvr->FoundFileAddr - NVRHeaderSize - nvr->FileSizePrev;
+        } else {
+            if (flags & NVR_OPEN_FLAGS_NEXT) {
+                if ((nvr->FoundFileAddr + nvr->FoundFileSize) > nvr->MemorySize) start = nvr->MemoryStartAddr;
+                else start = nvr->MemoryStartAddr + nvr->FoundFileAddr + nvr->MemoryStartAddr;
+            } else {
+                start = nvr->MemoryStartAddr + nvr->FoundFileAddr - NVRHeaderSize;
+            }
+        }
     }
     end = nvr->MemoryStartAddr + nvr->MemorySize; 
     
     uint64_t fileId = 0, fileIdPrev = 0, fileIdMax = 0;
-    uint32_t addr, s, crc, exit = 0, emptyPages = 0;     
+    uint32_t addr, s, crc, exit = 0, emptyPages = 0, sizePrev = 0;     
     nvr->TryToOpen = 1;
     nvr->FileFound = nvr->FoundFileAddr = nvr->FoundFileSize = nvr->FoundFileId = 0;
     while ((start < end) && (exit == 0)) {
-        switch (ret = NVRCheckHeader(nvr, start, &addr, &fileId, &s, &crc)) {
+        switch (ret = NVRCheckHeader(nvr, start, &addr, &fileId, &s, &crc, &sizePrev)) {
             case NVR_ERROR_NONE:
                 start = addr + s;  // next addr to scan
                 if (nvr->Flags & NVR_FLAGS_PAGE_ALIGN) {
@@ -122,25 +142,22 @@ NVRError_t NVROpenFile(NVRamKV_t *nvr, uint64_t id, uint32_t *size, uint32_t fla
                    start += nvr->PageSize - pageFilled;
                 }                             
                 if ((id == fileId) || (flags & NVR_OPEN_FLAGS_ANY_ID)) {                    
-                    nvr->FileFound = 1;
-                    nvr->FoundFileId = fileId;        
-                    nvr->FoundFileAddr = addr + NVRHeaderSize - nvr->MemoryStartAddr;       // - startAddr => make relative addr
-                    nvr->FoundFileSize = s - NVRHeaderSize;     
-                    nvr->CRC32Temp = crc;
+                    FILE_FOUND();
                     exit = flags & NVR_OPEN_FLAGS_FIRST_MATCH;
                 } else {
                     if (flags & NVR_OPEN_FLAGS_NEAREST) {
                         if ((id > fileIdPrev) && (id < fileId)) {
-                            nvr->FileFound = 1;
-                            nvr->FoundFileId = fileId;
-                            nvr->FoundFileAddr = addr + NVRHeaderSize - nvr->MemoryStartAddr;       // - startAddr => make relative addr
-                            nvr->FoundFileSize = s - NVRHeaderSize;     
-                            nvr->CRC32Temp = crc;
+                            FILE_FOUND();
                             exit = 1;
                         }
                     } else {
                         if (flags & NVR_OPEN_FLAGS_MAX_ID) {
-                            if (fileId > fileIdMax) fileIdMax = fileId;
+                            if (fileId >= fileIdMax) {
+                                fileIdMax = fileId;
+                                FILE_FOUND();
+                            } else {                                
+                                exit = 1;
+                            }
                         }
                     }
                 }
@@ -215,6 +232,17 @@ uint32_t NVRGetNextAddr(NVRamKV_t *nvr)
   * @param
   * @retval
   */
+uint32_t NVRGetPrevAddr(NVRamKV_t *nvr)
+{
+    if (nvr->FoundFileAddr > NVRHeaderSize) return nvr->FoundFileAddr - NVRHeaderSize - nvr->FileSizePrev;
+    else return nvr->LastFileAddr; 
+}
+
+/**
+  * @brief      
+  * @param
+  * @retval
+  */
 uint32_t NVRGetFileCRC(NVRamKV_t *nvr)
 {
     return nvr->CRC32Temp;
@@ -239,7 +267,29 @@ NVRError_t NVRMoveToNextFile(NVRamKV_t *nvr)
 {
     if (nvr->FileFound) {
         if (nvr->Flags & NVR_FLAGS_PAGE_ALIGN) {
-            uint32_t start = nvr->FoundFileAddr + nvr->FoundFileSize;// why ???? - NVRHeaderSize;
+            uint32_t start = nvr->FoundFileAddr + nvr->FoundFileSize;
+            uint32_t pageFilled = start % nvr->PageSize;
+            start += nvr->PageSize - pageFilled;
+            nvr->FoundFileAddr = start + NVRHeaderSize;
+        } else { 
+            nvr->FoundFileAddr += nvr->FoundFileSize;
+        }
+        return NVR_ERROR_NONE;
+    } else {
+        return NVR_ERROR_NOT_FOUND;
+    }    
+}
+
+/**
+  * @brief      
+  * @param
+  * @retval
+  */
+NVRError_t NVRMoveToPrevFile(NVRamKV_t *nvr)
+{
+    if (nvr->FileFound) {
+        if (nvr->Flags & NVR_FLAGS_PAGE_ALIGN) {
+            uint32_t start = nvr->FoundFileAddr + nvr->FoundFileSize;
             uint32_t pageFilled = start % nvr->PageSize;
             start += nvr->PageSize - pageFilled;
             nvr->FoundFileAddr = start + NVRHeaderSize;
@@ -263,7 +313,7 @@ uint64_t NVRGetFoundId(NVRamKV_t *nvr)
 }
 
 /**
-  * @brief
+  * @brief  Read opened file before
   * @param
   * @retval
   */
@@ -337,8 +387,10 @@ NVRError_t NVRWriteFile(NVRamKV_t *nvr, uint64_t id, uint8_t *data, uint32_t siz
     if ((addr + NVRHeaderSize + size) > nvr->MemorySize) {
         addr = 0;
         owf = 1;
-    }
+        nvr->LastFileAddr = nvr->FoundFileAddr; // update addr
+    } 
     nvr->FoundFileAddr = addr + NVRHeaderSize;  // to allaw instant access to the file after writing
+    nvr->FileSizePrev = nvr->FoundFileSize;
     nvr->FoundFileSize = size;
     nvr->FoundFileId = id;
     
@@ -350,7 +402,11 @@ NVRError_t NVRWriteFile(NVRamKV_t *nvr, uint64_t id, uint8_t *data, uint32_t siz
     h->FileId = id;
     h->FileIdInv = ~id;
     h->DataSize = size;  
-    h->DataSizeInv = ~size;  
+    h->DataSizeInv = ~size; 
+    h->DataSizePrev = nvr->FileSizePrev;
+    h->DataSizePrevInv = ~nvr->FileSizePrev;
+    h->LastFileAddr = nvr->LastFileAddr;
+    h->LastFileAddrInv = ~nvr->LastFileAddr;
     h->DataCRC32 = CalcCRC32(data, size, 0);
                         
     if ((pageFilled + NVRHeaderSize + size) > nvr->PageSize) {
@@ -409,7 +465,7 @@ NVRError_t NVREraseAll(NVRamKV_t *nvr)
   * @param
   * @retval
   */
-static NVRError_t NVRCheckHeader(NVRamKV_t *nvr, uint32_t addr, uint32_t *currAddr, uint64_t *currId, uint32_t *currSize, uint32_t *crc)
+static NVRError_t NVRCheckHeader(NVRamKV_t *nvr, uint32_t addr, uint32_t *currAddr, uint64_t *currId, uint32_t *currSize, uint32_t *crc, uint32_t *prevSize)
 {    
     uint32_t offset = 0;
     uint32_t endMem = nvr->MemoryStartAddr + nvr->MemorySize;
@@ -423,11 +479,12 @@ static NVRError_t NVRCheckHeader(NVRamKV_t *nvr, uint32_t addr, uint32_t *currAd
     uint8_t empty = 1;
     while (offset < bytesToRead - NVRHeaderSize) {        
         NVRHeader_t *h = (NVRHeader_t *)&nvr->Page[offset];         
-        if ((h->Preamble == PREAMBLE) && (h->FileId == ~h->FileIdInv) && (h->DataSize != 0) && (h->DataSize == ~h->DataSizeInv)) {      // the write procedure doesnt split the header into two pages
+        if ((h->Preamble == PREAMBLE) && (h->FileId == ~h->FileIdInv) && (h->DataSize != 0) && (h->DataSize == ~h->DataSizeInv) && (h->DataSizePrev == ~h->DataSizePrevInv) && (h->LastFileAddr == ~h->LastFileAddrInv)) {      // the write procedure doesnt split the header into two pages
             *currAddr = addr + offset;
             *currId = h->FileId;                                    
             *currSize = NVRHeaderSize + h->DataSize; 
             *crc = h->DataCRC32;
+            nvr->LastFileAddr = h->LastFileAddr;
             return NVR_ERROR_NONE;                
         } else {
             if (0 != memcmp(h, &EmptyNVRHeader, NVRHeaderSize)) {
