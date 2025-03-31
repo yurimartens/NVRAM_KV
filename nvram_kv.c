@@ -120,19 +120,21 @@ NVRError_t NVROpenFile(NVRamKV_t *nvr, uint64_t id, uint32_t *size, uint32_t fla
                 if (nvr->Flags & NVR_FLAGS_PAGE_ALIGN) {
                    uint32_t pageFilled = start % nvr->PageSize;
                    start += nvr->PageSize - pageFilled;
-                } 
-                nvr->FoundFileAddr = addr + NVRHeaderSize - nvr->MemoryStartAddr;       // - startAddr => make relative addr
-                nvr->FoundFileSize = s - NVRHeaderSize;                 
-                if ((id == fileId) || (flags & NVR_OPEN_FLAGS_ANY_ID)) {
-                    nvr->FileFound = 1; 
+                }                             
+                if ((id == fileId) || (flags & NVR_OPEN_FLAGS_ANY_ID)) {                    
+                    nvr->FileFound = 1;
                     nvr->FoundFileId = fileId;        
+                    nvr->FoundFileAddr = addr + NVRHeaderSize - nvr->MemoryStartAddr;       // - startAddr => make relative addr
+                    nvr->FoundFileSize = s - NVRHeaderSize;     
                     nvr->CRC32Temp = crc;
                     exit = flags & NVR_OPEN_FLAGS_FIRST_MATCH;
                 } else {
                     if (flags & NVR_OPEN_FLAGS_NEAREST) {
                         if ((id > fileIdPrev) && (id < fileId)) {
-                            nvr->FileFound = 1; 
+                            nvr->FileFound = 1;
                             nvr->FoundFileId = fileId;
+                            nvr->FoundFileAddr = addr + NVRHeaderSize - nvr->MemoryStartAddr;       // - startAddr => make relative addr
+                            nvr->FoundFileSize = s - NVRHeaderSize;     
                             nvr->CRC32Temp = crc;
                             exit = 1;
                         }
