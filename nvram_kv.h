@@ -28,8 +28,8 @@ extern "C" {
 #define NVR_OPEN_FLAGS_BACKWARD                         (1 << 4) 
 #define NVR_OPEN_FLAGS_ANY_ID                           (1 << 5)
 #define NVR_OPEN_FLAGS_MAX_ID                           (1 << 6)
-#define NVR_OPEN_FLAGS_PREVIOUS                         ((1 << 7) | NVR_OPEN_FLAGS_FROM_CURRENT_POS)
-#define NVR_OPEN_FLAGS_NEXT                             ((1 << 8) | NVR_OPEN_FLAGS_FROM_CURRENT_POS)
+#define NVR_OPEN_FLAGS_PREVIOUS                         ((1 << 7) | NVR_OPEN_FLAGS_FROM_CURRENT_POS | NVR_OPEN_FLAGS_ANY_ID | NVR_OPEN_FLAGS_FIRST_MATCH)
+#define NVR_OPEN_FLAGS_NEXT                             ((1 << 8) | NVR_OPEN_FLAGS_FROM_CURRENT_POS | NVR_OPEN_FLAGS_ANY_ID | NVR_OPEN_FLAGS_FIRST_MATCH)
 #define NVR_OPEN_FLAGS_SCAN_FILES                       (NVR_OPEN_FLAGS_FROM_CURRENT_POS | NVR_OPEN_FLAGS_ANY_ID | NVR_OPEN_FLAGS_FIRST_MATCH)    
 #define NVR_OPEN_FLAGS_READ_SEQUENCE                    (NVR_OPEN_FLAGS_FROM_CURRENT_POS | NVR_OPEN_FLAGS_ANY_ID | NVR_OPEN_FLAGS_FIRST_MATCH)        
     
@@ -86,12 +86,11 @@ typedef struct NVRamKV {
 NVRError_t NVRInit(NVRamKV_t *nvr, uint32_t pageSize, uint32_t sectorSize, uint32_t startAddr, uint32_t memSize, uint8_t *page, uint32_t flags);
 NVRError_t NVRInitLL(NVRamKV_t *nvr, NVRReadData_t nvrRead, NVRWriteData_t nvrWrite, NVREraseSector_t nvrErase);
 NVRError_t NVROpenFile(NVRamKV_t *nvr, uint64_t id, uint32_t *size, uint32_t flags, uint32_t emptyPagesLim);
+uint32_t   NVRGetCurrAddr(NVRamKV_t *nvr);
 uint32_t   NVRGetNextAddr(NVRamKV_t *nvr);
 uint32_t   NVRGetPrevAddr(NVRamKV_t *nvr);
 uint32_t   NVRGetFileCRC(NVRamKV_t *nvr);
 void       NVRMoveToStart(NVRamKV_t *nvr);
-NVRError_t NVRMoveToNextFile(NVRamKV_t *nvr);
-NVRError_t NVRMoveToPrevFile(NVRamKV_t *nvr);
 uint64_t   NVRGetFoundId(NVRamKV_t *nvr);
 NVRError_t NVRReadFile(NVRamKV_t *nvr, uint32_t pos, uint8_t *data, uint32_t size);
 NVRError_t NVRWriteFile(NVRamKV_t *nvr, uint64_t id, uint8_t *data, uint32_t size);
