@@ -240,7 +240,7 @@ uint32_t NVRGetNextAddr(NVRamKV_t *nvr)
         addr = nvr->FoundFileAddr + nvr->FoundFileSize;
         if (nvr->Flags & NVR_FLAGS_PAGE_ALIGN) {            
             uint32_t pageFilled = addr % nvr->PageSize;
-            addr += nvr->PageSize - pageFilled;
+            if (pageFilled) addr += nvr->PageSize - pageFilled; // else if 0 then addr is page align already
         } 
     }     
     return addr;
