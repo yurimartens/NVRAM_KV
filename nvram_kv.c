@@ -139,7 +139,7 @@ NVRError_t NVROpenFile(NVRamKV_t *nvr, uint64_t id, uint32_t *size, uint32_t fla
                 start = addr + s;  // next addr to scan
                 if (nvr->Flags & NVR_FLAGS_PAGE_ALIGN) {
                     uint32_t pageFilled = start % nvr->PageSize;
-                    start += nvr->PageSize - pageFilled;
+                    if (pageFilled) start += nvr->PageSize - pageFilled;    // else if 0 then addr is page aligned already
                 }                             
                 if ((id == fileId) || (flags & NVR_OPEN_FLAGS_ANY_ID)) {                    
                     FILE_FOUND();
@@ -240,7 +240,7 @@ uint32_t NVRGetNextAddr(NVRamKV_t *nvr)
         addr = nvr->FoundFileAddr + nvr->FoundFileSize;
         if (nvr->Flags & NVR_FLAGS_PAGE_ALIGN) {            
             uint32_t pageFilled = addr % nvr->PageSize;
-            if (pageFilled) addr += nvr->PageSize - pageFilled; // else if 0 then addr is page align already
+            if (pageFilled) addr += nvr->PageSize - pageFilled; // else if 0 then addr is page aligned already
         } 
     }     
     return addr;
@@ -254,7 +254,7 @@ uint32_t NVRGetNextAddr(NVRamKV_t *nvr)
 uint32_t NVRGetPrevAddr(NVRamKV_t *nvr)
 {
     int32_t addr = nvr->FoundFileAddr - 2 * NVRHeaderSize - nvr->FileSizePrev;
-    if (addr < (int32_t)NVRHeaderSize) {
+    if (addr < 0) {
         if (nvr->LastFileAddr == 0) addr = -1;  // -1 - stop 
         else addr = nvr->LastFileAddr;
     } else {
