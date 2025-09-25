@@ -70,8 +70,7 @@ typedef struct NVRamKV {
     uint64_t                    FoundFileId;
     uint32_t                    FoundFileAddr;      // relative addr 
     uint32_t                    FoundFileSize;      // just payload without headerSize
-    uint32_t                    FileSizePrev;
-    uint32_t                    LastFileAddr;       // relative addr 
+    uint32_t                    FileAddrPrev;       // relative addr 
     uint32_t                    Flags;
     uint32_t                    CRC32Temp;
     
