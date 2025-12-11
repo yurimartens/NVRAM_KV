@@ -216,6 +216,16 @@ uint32_t NVRGetCurrAddr(const NVRamKV_t *nvr)
   * @param
   * @retval
   */
+uint32_t NVRGetFoundFileAddr(const NVRamKV_t *nvr)
+{
+    return nvr->FoundFileAddr;    
+}
+
+/**
+  * @brief      
+  * @param
+  * @retval
+  */
 uint32_t NVRGetNextAddr(const NVRamKV_t *nvr)
 {
     uint32_t addr = 0;
@@ -257,6 +267,18 @@ uint32_t NVRGetFileCRC(const NVRamKV_t *nvr)
 void NVRMoveToStart(NVRamKV_t *nvr)
 {
     nvr->FileFound = nvr->FoundFileAddr = nvr->FoundFileSize = 0;
+}
+
+/**
+  * @brief      
+  * @param
+  * @retval
+  */
+void NVRMoveToFileAddr(NVRamKV_t *nvr, uint32_t addr, uint32_t size)
+{
+    nvr->FileFound = 1; 
+    nvr->FoundFileAddr = addr;
+    nvr->FoundFileSize = size;
 }
 
 
