@@ -183,7 +183,12 @@ NVRError_t NVROpenFile(NVRamKV_t *nvr, uint64_t id, uint32_t *size, uint32_t fla
                 if (nvr->FileFound) exit = 1;   // a file was found in a prev cycle
             break;
             case NVR_ERROR_HEADER:  // whether corrupted page or random place in a long (more than 1 page) entry
-                start += nvr->PageSize;
+                if ((flags & NVR_OPEN_FLAGS_PREVIOUS) == NVR_OPEN_FLAGS_PREVIOUS) {
+                    if (start >= nvr->PageSize) start -= nvr->PageSize;
+                    else exit = 1;
+                } else {
+                    start += nvr->PageSize;
+                }
             break; 
             default:
                 return ret;
